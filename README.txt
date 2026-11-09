@@ -1,8 +1,5 @@
-Smart Study AI PWA - نسخة تجريبية
+Smart Study AI V7
 
-1) ارفع جميع ملفات هذا المجلد كما هي إلى استضافة HTTPS ثابتة.
-2) افتح الرابط على Android في Chrome ثم اختر Install app / Add to Home screen.
-3) افتح الرابط على iPhone في Safari ثم Share > Add to Home Screen.
+Updated local linear-equation solution steps and RTL/LTR rendering. Camera and attachment selection are present, but AI analysis of documents and general questions is not active. A secure server-side Groq/Supabase connection is required; never put API keys in public GitHub files.
 
-لا يمكن تثبيت PWA كامل من ملف HTML محلي file://؛ يلزم HTTPS.
-هذه نسخة V6 تجريبية وليست متصلة بالذكاء الاصطناعي. التصوير والإرفاق لا يقرآن الملفات بعد.
+Upload all six files to the root of your existing GitHub repository, replacing matching files. GitHub Pages will rebuild automatically.
