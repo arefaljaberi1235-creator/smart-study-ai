@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smart Study AI</title>
+<meta name="theme-color" content="#21183e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Smart Study AI">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<style>
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(150deg,#261b48,#100e25);color:#f5f0ff;font-family:system-ui,Arial;min-height:100vh}.wrap{max-width:790px;margin:auto;padding:30px 22px}.head{text-align:center;margin:25px 0 35px}.head .logo{font-size:40px}.head h1{font-size:30px;margin:8px}.head p{color:#c5b7e5}.chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:25px 0}.chips span{border:1px solid #544576;border-radius:25px;padding:8px 14px;color:#d8cbef}.panel{background:#1d1735;border:1px solid #5b4b80;border-radius:24px;padding:22px}textarea{background:#100e23;border:1px solid #625185;color:white;border-radius:18px;padding:20px;width:100%;height:195px;font:18px/1.8 system-ui;resize:vertical;outline:none}textarea:focus{border-color:#b79aff}.row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}button{font:inherit;cursor:pointer;border-radius:14px;padding:13px 18px;border:1px solid #65518a;background:#30254c;color:#f2eaff}.main{width:100%;background:linear-gradient(90deg,#7550e7,#a06af3);border:0;font-weight:750;margin-top:16px}button:hover{filter:brightness(1.13)}button:disabled{opacity:.6;cursor:wait}.ans{margin-top:20px;background:#2a2147;border:1px solid #67528c;border-radius:18px;padding:20px;display:none}.ans h3{margin-top:0;color:#d5baff}.answerText{white-space:pre-wrap;overflow-wrap:anywhere;line-height:2;font-size:18px}.foot{color:#e9c46d;font-size:13px;margin-top:16px}.small{color:#b8a9d2;font-size:13px;margin-top:10px}.language-control{margin-top:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}.language-control label{color:#d8cbef;font-size:15px}.language-control select{background:#30254c;color:#f5f0ff;border:1px solid #65518a;border-radius:12px;padding:10px 14px;font:inherit;min-width:160px}.attach{display:none;background:#2c2448;padding:12px;border-radius:12px;margin-top:10px}.attach button{margin:4px}.fileinfo{margin-top:8px;color:#c8b9eb;font-size:13px}@media(max-width:480px){.wrap{padding:16px}.head h1{font-size:25px}.panel{padding:15px}button{font-size:14px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="head"><div class="logo">🎓</div><h1>Smart Study AI</h1><p>معلمك الذكي في كل المواد<br>Your intelligent tutor for every subject</p></div>
+<div class="chips"><span>رياضيات</span><span>فيزياء</span><span>كيمياء</span><span>أحياء</span><span>برمجة</span><span>عربي</span><span>English</span></div>
+<section class="panel">
+<h2>✦ اسأل المعلم الذكي</h2>
+<p class="small">اكتب السؤال، أو صوّر سؤالًا، أو أرفق مستندًا</p>
+<textarea id="question" placeholder="مثال: 2x + 3 = 15"></textarea>
+<div class="row"><button id="attachBtn" type="button">📷 تصوير أو إرفاق ▾</button><button id="sample" type="button">✨ سؤال تجريبي</button></div>
+<div class="attach" id="attachMenu"><button id="cameraBtn" type="button">📷 تصوير بالكاميرا</button><button id="fileBtn" type="button">📎 إرفاق صورة أو مستند</button><div class="small">يمكن اختيار الصور وPDF وWord وTXT. قراءة محتواها بالذكاء الاصطناعي غير مفعلة بعد.</div></div>
+<input id="camera" type="file" accept="image/*" capture="environment" hidden>
+<input id="file" type="file" accept="image/*,.pdf,.doc,.docx,.txt" hidden>
+<div class="fileinfo" id="fileInfo"></div>
+<div class="language-control"><label for="answerLanguage">لغة الإجابة / Answer language</label><select id="answerLanguage"><option value="auto">تلقائي / Auto</option><option value="ar">العربية</option><option value="en">English</option></select></div>
+<button class="main" id="solve" type="button">✦ اسأل المعلم الذكي</button>
+<div class="row" style="justify-content:space-between"><button id="clear" type="button">↻ مسح السؤال والمرفق</button><span class="foot" id="connectionStatus">● مساعد ذكي متصل بالخادم</span></div>
+<section class="ans" id="answer" aria-live="polite"><h3>✦ الإجابة</h3><div class="answerText" id="result"></div></section>
+</section>
+<p class="small" style="text-align:center">Smart Study AI — حل الأسئلة باستخدام مساعد ذكاء اصطناعي. تحليل الصور والمستندات غير متاح حالياً.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const API_URL = 'https://inlzzlbzyltqbiissacu.supabase.co/functions/v1/make-server-3711d6fd/ask';
+let attachment = null;
+let controller = null;
+const languageSelect = $('answerLanguage');
+try { const saved = localStorage.getItem('smart-study-answer-language'); if (['auto','ar','en'].includes(saved)) languageSelect.value = saved; } catch (_) {}
+languageSelect.onchange = () => { try { localStorage.setItem('smart-study-answer-language',languageSelect.value); } catch (_) {} };
+function getAnswerLanguage(q) {
+  if (languageSelect.value !== 'auto') return languageSelect.value;
+  if (/[\u0600-\u06FF]/.test(q)) return 'ar';
+  if (/[a-zA-Z]/.test(q.replace(/\b[xX]\b/g,'').replace(/\d+(?:\.\d+)?\s*\*?\s*[xX]/g,''))) return 'en';
+  return 'ar';
+}
+function showAnswer(message,lang) {
+  $('result').textContent = message;
+  $('result').dir = lang === 'ar' ? 'rtl' : 'ltr';
+  $('result').style.textAlign = lang === 'ar' ? 'right' : 'left';
+  $('answer').style.display = 'block';
+  $('answer').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+$('attachBtn').onclick = () => { $('attachMenu').style.display = $('attachMenu').style.display === 'block' ? 'none' : 'block'; };
+$('cameraBtn').onclick = () => $('camera').click();
+$('fileBtn').onclick = () => $('file').click();
+for (const id of ['camera','file']) {
+  $(id).onchange = e => {
+    attachment = e.target.files[0] || null;
+    $('fileInfo').textContent = attachment ? '📎 ' + attachment.name : '';
+    $('attachMenu').style.display = 'none';
+  };
+}
+$('sample').onclick = () => { $('question').value = '2x + 3 = 15'; $('question').focus(); };
+$('clear').onclick = () => {
+  if (controller) controller.abort();
+  $('question').value = '';
+  attachment = null;
+  $('file').value = '';
+  $('camera').value = '';
+  $('fileInfo').textContent = '';
+  $('answer').style.display = 'none';
+  $('solve').disabled = false;
+  $('solve').textContent = '✦ اسأل المعلم الذكي';
+};
+$('solve').onclick = async () => {
+  const q = $('question').value.trim();
+  const lang = getAnswerLanguage(q);
+  const ar = lang === 'ar';
+  if (attachment) {
+    showAnswer(ar ? 'تحليل الصور والمستندات غير متاح حالياً. اكتب السؤال نصياً.' : 'Image and document analysis is not available yet. Please type your question.',lang);
+    return;
+  }
+  if (!q) { showAnswer(ar ? 'اكتب سؤالك أولاً.' : 'Please enter your question first.',lang); return; }
+  $('solve').disabled = true;
+  $('solve').textContent = ar ? 'جاري حل السؤال...' : 'Solving...';
+  showAnswer(ar ? 'جاري إعداد الإجابة...' : 'Preparing your answer...',lang);
+  controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 45000);
+  try {
+    const response = await fetch(API_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({question:q,isArabic:ar}),
+      signal:controller.signal
+    });
+    const data = await response.json();
+    if (!response.ok || typeof data.answer !== 'string' || !data.answer.trim()) {
+      throw new Error(data.error || `HTTP ${response.status}`);
+    }
+    showAnswer(data.answer.trim(),lang);
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      showAnswer(ar ? 'انتهت مهلة الاتصال. حاول مرة أخرى.' : 'Request timed out. Please try again.',lang);
+    } else {
+      console.error('AI request failed:',err);
+      showAnswer(ar ? 'تعذر الاتصال بالمساعد الذكي. تحقق من إعدادات الخادم ثم حاول مرة أخرى.' : 'Could not connect to the AI tutor. Check the server settings and try again.',lang);
+    }
+  } finally {
+    clearTimeout(timeout);
+    controller = null;
+    $('solve').disabled = false;
+    $('solve').textContent = '✦ اسأل المعلم الذكي';
+  }
+};
+</script>
+<script>
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load',() => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
